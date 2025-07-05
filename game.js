@@ -37,6 +37,11 @@ for (let c = 0; c < enemyColumnCount; c++) {
     }
 }
 
+// Function to log current player position - For Debugging
+function logPlayerState() {
+    console.log(`Player Position: x=${player.position.x}, y=${player.position.y}`);
+}
+
 // Key state tracking
 const keys = {};
 
@@ -54,6 +59,9 @@ function animate() {
     if (keys['ArrowRight']) {
         player.position.x += 0.05;
     }
+
+    // Log position for debugging
+    logPlayerState();
 
     // Fire bullets
     if (keys[' ']) { // Space bar for shooting
