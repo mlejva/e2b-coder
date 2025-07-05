@@ -26,6 +26,10 @@ const enemyOffsetLeft = 30;
 // Key state monitoring
 const keys = {};
 
+// Shooting rate management
+const shootingInterval = 300; // milliseconds
+let lastShotTime = 0;
+
 // Create enemies
 for(let c = 0; c < enemyColumnCount; c++) {
     enemies[c] = [];
@@ -78,16 +82,20 @@ function draw() {
     if (keys['ArrowRight'] && player.x + player.width < canvas.width) {
         player.x += player.speed;
     }
-    if (keys[' '] && !keys['SpaceHandled']) { // Space bar
-        bullets.push({
-            x: player.x + player.width / 2 - 2,
-            y: player.y,
-            width: 4,
-            height: 10,
-            color: 'yellow',
-            speed: 7
-        });
-        keys['SpaceHandled'] = true; // To avoid rapid fire
+    // Fire continuously when space is held
+    if (keys[' ']) { // Space bar
+        const currentTime = Date.now();
+        if (currentTime - lastShotTime >= shootingInterval) {
+            bullets.push({
+                x: player.x + player.width / 2 - 2,
+                y: player.y,
+                width: 4,
+                height: 10,
+                color: 'yellow',
+                speed: 7
+            });
+            lastShotTime = currentTime;
+        }
     }
 
     // Draw player
@@ -125,7 +133,4 @@ window.addEventListener('keydown', function(event) {
 
 window.addEventListener('keyup', function(event) {
     keys[event.key] = false;
-    if (event.key === ' ') {
-        keys['SpaceHandled'] = false; // Reset space handled when key is released
-    }
 });
