@@ -1,15 +1,19 @@
 {
   "name": "e2b-coder",
   "version": "1.0.0",
+  "description": "",
   "main": "game.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "http-server -c-1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "three": "^0.178.0"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
   }
 }
