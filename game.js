@@ -33,23 +33,50 @@ for(let c = 0; c < enemyColumnCount; c++) {
     }
 }
 
+// Collision detection
+function detectCollisions() {
+    bullets.forEach((bullet, bulletIndex) => {
+        enemies.forEach((column) => {
+            column.forEach((enemy) => {
+                if (enemy.status === 1) {
+                    if (
+                        bullet.x < enemy.x + enemyWidth &&
+                        bullet.x + bullet.width > enemy.x &&
+                        bullet.y < enemy.y + enemyHeight &&
+                        bullet.y + bullet.height > enemy.y
+                    ) {
+                        bullet.toDelete = true;
+                        enemy.status = 0;
+                    }
+                }
+            });
+        });
+    });
+    
+    // Remove bullets marked for deletion
+    for (let i = bullets.length - 1; i >= 0; i--) {
+        if (bullets[i].toDelete) {
+            bullets.splice(i, 1);
+        }
+    }
+}
+
 // Game loop
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Detect collisions
+    detectCollisions();
 
     // Draw player
     ctx.fillStyle = player.color;
     ctx.fillRect(player.x, player.y, player.width, player.height);
 
     // Draw bullets
-    bullets.forEach((bullet, index) => {
-        if (bullet.y + bullet.height < 0) {
-            bullets.splice(index, 1);
-        } else {
-            bullet.y -= bullet.speed;
-            ctx.fillStyle = bullet.color;
-            ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
-        }
+    bullets.forEach((bullet) => {
+        bullet.y -= bullet.speed;
+        ctx.fillStyle = bullet.color;
+        ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
     });
 
     // Draw enemies
