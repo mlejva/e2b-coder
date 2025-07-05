@@ -23,6 +23,9 @@ const enemyPadding = 10;
 const enemyOffsetTop = 30;
 const enemyOffsetLeft = 30;
 
+// Key state monitoring
+const keys = {};
+
 // Create enemies
 for(let c = 0; c < enemyColumnCount; c++) {
     enemies[c] = [];
@@ -68,6 +71,25 @@ function draw() {
     // Detect collisions
     detectCollisions();
 
+    // Handle keyboard input
+    if (keys['ArrowLeft'] && player.x > 0) {
+        player.x -= player.speed;
+    }
+    if (keys['ArrowRight'] && player.x + player.width < canvas.width) {
+        player.x += player.speed;
+    }
+    if (keys[' '] && !keys['SpaceHandled']) { // Space bar
+        bullets.push({
+            x: player.x + player.width / 2 - 2,
+            y: player.y,
+            width: 4,
+            height: 10,
+            color: 'yellow',
+            speed: 7
+        });
+        keys['SpaceHandled'] = true; // To avoid rapid fire
+    }
+
     // Draw player
     ctx.fillStyle = player.color;
     ctx.fillRect(player.x, player.y, player.width, player.height);
@@ -96,24 +118,14 @@ function draw() {
 
 draw();
 
-// Event listeners for player movement and shooting
+// Event listeners for keydown and keyup
 window.addEventListener('keydown', function(event) {
-    switch(event.key) {
-        case 'ArrowLeft':
-            if (player.x > 0) player.x -= player.speed;
-            break;
-        case 'ArrowRight':
-            if (player.x + player.width < canvas.width) player.x += player.speed;
-            break;
-        case ' ': // Space bar
-            bullets.push({
-                x: player.x + player.width / 2 - 2,
-                y: player.y,
-                width: 4,
-                height: 10,
-                color: 'yellow',
-                speed: 7
-            });
-            break;
+    keys[event.key] = true;
+});
+
+window.addEventListener('keyup', function(event) {
+    keys[event.key] = false;
+    if (event.key === ' ') {
+        keys['SpaceHandled'] = false; // Reset space handled when key is released
     }
 });
