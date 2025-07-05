@@ -1,130 +1,86 @@
-// Space Invaders Game in JavaScript
+import * as THREE from 'three';
 
 const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+const renderer = new THREE.WebGLRenderer({ canvas });
+renderer.setSize(canvas.width, canvas.height);
 
-const player = {
-    x: canvas.width / 2 - 20,
-    y: canvas.height - 60,
-    width: 40,
-    height: 20,
-    color: 'green',
-    speed: 5
-};
+const scene = new THREE.Scene();
 
+const camera = new THREE.PerspectiveCamera(75, canvas.width / canvas.height, 0.1, 1000);
+camera.position.z = 5;
+
+const playerGeometry = new THREE.BoxGeometry(1, 0.5, 0.5);
+const playerMaterial = new THREE.MeshBasicMaterial({ color: 'green' });
+const player = new THREE.Mesh(playerGeometry, playerMaterial);
+scene.add(player);
+
+// Set up bullet properties
+const bulletGeometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+const bulletMaterial = new THREE.MeshBasicMaterial({ color: 'yellow' });
 const bullets = [];
 
+// Set up enemy properties
+const enemyGeometry = new THREE.BoxGeometry(1, 0.5, 0.5);
+const enemyMaterial = new THREE.MeshBasicMaterial({ color: 'red' });
 const enemies = [];
 const enemyRowCount = 5;
 const enemyColumnCount = 10;
-const enemyWidth = 40;
-const enemyHeight = 20;
-const enemyPadding = 10;
-const enemyOffsetTop = 30;
-const enemyOffsetLeft = 30;
+const enemyPadding = 1.5;
 
-// Key state monitoring
+// Initialize enemies
+for (let c = 0; c < enemyColumnCount; c++) {
+    for (let r = 0; r < enemyRowCount; r++) {
+        const enemy = new THREE.Mesh(enemyGeometry, enemyMaterial);
+        enemy.position.set(c * enemyPadding, 2 - r * enemyPadding, 0);
+        enemies.push(enemy);
+        scene.add(enemy);
+    }
+}
+
+// Key state tracking
 const keys = {};
 
-// Shooting rate management
+// Shooting management
 const shootingInterval = 300; // milliseconds
 let lastShotTime = 0;
 
-// Create enemies
-for(let c = 0; c < enemyColumnCount; c++) {
-    enemies[c] = [];
-    for(let r = 0; r < enemyRowCount; r++) {
-        const enemyX = c * (enemyWidth + enemyPadding) + enemyOffsetLeft;
-        const enemyY = r * (enemyHeight + enemyPadding) + enemyOffsetTop;
-        enemies[c][r] = { x: enemyX, y: enemyY, status: 1 };
-    }
-}
+function animate() {
+    requestAnimationFrame(animate);
 
-// Collision detection
-function detectCollisions() {
-    bullets.forEach((bullet, bulletIndex) => {
-        enemies.forEach((column) => {
-            column.forEach((enemy) => {
-                if (enemy.status === 1) {
-                    if (
-                        bullet.x < enemy.x + enemyWidth &&
-                        bullet.x + bullet.width > enemy.x &&
-                        bullet.y < enemy.y + enemyHeight &&
-                        bullet.y + bullet.height > enemy.y
-                    ) {
-                        bullet.toDelete = true;
-                        enemy.status = 0;
-                    }
-                }
-            });
-        });
-    });
-    
-    // Remove bullets marked for deletion
-    for (let i = bullets.length - 1; i >= 0; i--) {
-        if (bullets[i].toDelete) {
-            bullets.splice(i, 1);
-        }
+    // Move player
+    if (keys['ArrowLeft']) {
+        player.position.x -= 0.05;
     }
-}
-
-// Game loop
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Detect collisions
-    detectCollisions();
-
-    // Handle keyboard input
-    if (keys['ArrowLeft'] && player.x > 0) {
-        player.x -= player.speed;
+    if (keys['ArrowRight']) {
+        player.position.x += 0.05;
     }
-    if (keys['ArrowRight'] && player.x + player.width < canvas.width) {
-        player.x += player.speed;
-    }
-    // Fire continuously when space is held
-    if (keys[' ']) { // Space bar
+
+    // Fire bullets
+    if (keys[' ']) { // Space bar for shooting
         const currentTime = Date.now();
         if (currentTime - lastShotTime >= shootingInterval) {
-            bullets.push({
-                x: player.x + player.width / 2 - 2,
-                y: player.y,
-                width: 4,
-                height: 10,
-                color: 'yellow',
-                speed: 7
-            });
+            const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
+            bullet.position.set(player.position.x, player.position.y, player.position.z);
+            bullets.push(bullet);
+            scene.add(bullet);
             lastShotTime = currentTime;
         }
     }
 
-    // Draw player
-    ctx.fillStyle = player.color;
-    ctx.fillRect(player.x, player.y, player.width, player.height);
-
-    // Draw bullets
-    bullets.forEach((bullet) => {
-        bullet.y -= bullet.speed;
-        ctx.fillStyle = bullet.color;
-        ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+    // Move bullets
+    bullets.forEach((bullet, index) => {
+        bullet.position.y += 0.1;
+        // Remove bullets that leave the visible area
+        if (bullet.position.y > 3) {
+            scene.remove(bullet);
+            bullets.splice(index, 1);
+        }
     });
 
-    // Draw enemies
-    for(let c = 0; c < enemyColumnCount; c++) {
-        for(let r = 0; r < enemyRowCount; r++) {
-            if (enemies[c][r].status == 1) {
-                const enemyX = enemies[c][r].x;
-                const enemyY = enemies[c][r].y;
-                ctx.fillStyle = 'red';
-                ctx.fillRect(enemyX, enemyY, enemyWidth, enemyHeight);
-            }
-        }
-    }
-
-    requestAnimationFrame(draw);
+    renderer.render(scene, camera);
 }
 
-draw();
+animate();
 
 // Event listeners for keydown and keyup
 window.addEventListener('keydown', function(event) {
